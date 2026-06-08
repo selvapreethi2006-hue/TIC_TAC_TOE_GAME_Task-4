@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ultimate Tic-Tac-Toe | Two-Player & AI modes</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+      padding: 20px;
+    }
+
+    /* game container */
+    .game-container {
+      max-width: 600px;
+      width: 100%;
+      background: rgba(22, 34, 48, 0.75);
+      backdrop-filter: blur(2px);
+      border-radius: 64px;
+      padding: 24px 24px 32px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.2s;
+    }
+
+    /* header & title */
+    .game-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .game-header h1 {
+      font-size: 2.2rem;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, #F9E0A0, #E0B07F);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-weight: 700;
+    }
+    .sub {
+      font-size: 0.75rem;
+      color: #9ab3cf;
+      letter-spacing: 1px;
+      margin-top: 6px;
+    }
+
+    /* mode toggle */
+    .mode-switch {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      background: #0f1a1f;
+      padding: 8px 12px;
+      border-radius: 80px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #2e4a5e;
+    }
+    .mode-btn {
+      background: transparent;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 8px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      color: #b9d0e7;
+      transition: 0.2s;
+      font-family: inherit;
+    }
+    .mode-btn.active {
+      background: #f5b042;
+      color: #1e2f3c;
+      box-shadow: 0 4px 10px rgba(245, 176, 66, 0.3);
+    }
+    .mode-btn:first-child.active {
+      background: #3c8f7c;
+      color: white;
+      box-shadow: 0 4px 10px rgba(60, 143, 124, 0.3);
+    }
+    .mode-btn:last-child.active {
+      background: #d45a3b;
+      color: white;
+    }
+
+    /* scoreboard */
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .player-card {
+      background: #071218c9;
+      backdrop-filter: blur(4px);
+      border-radius: 48px;
+      flex: 1;
+      text-align: center;
+      padding: 12px 8px;
+      border: 1px solid #2f4f6e;
+      transition: 0.1s;
+    }
+    .player-symbol {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: #202f3a;
+      display: inline-block;
+      width: 44px;
+      border-radius: 60px;
+      line-height: 44px;
+      margin-bottom: 8px;
+      color: #FFD966;
+      box-shadow: inset 0 1px 3px #00000033, 0 2px 3px rgba(255,255,200,0.1);
+    }
+    .player-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      color: #dddddd;
+    }
+    .score {
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-family: monospace;
+      background: #00000066;
+      margin-top: 8px;
+      border-radius: 40px;
+      padding: 4px;
+      color: #FADF8A;
+    }
+
+    /* game board grid */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      background-color: #10222b;
+      padding: 20px;
+      border-radius: 56px;
+      margin-bottom: 28px;
+      box-shadow: inset 0 0 6px #00000055, 0 12px 24px rgba(0,0,0,0.4);
+    }
+    .cell {
+      aspect-ratio: 1 / 1;
+      background: #1e3a47;
+      background-image: radial-gradient(circle at 35% 30%, #2e5a6b, #13323f);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      font-weight: 800;
+      font-family: 'Segoe UI', 'Fredoka One', cursive;
+      color: white;
+      text-shadow: 0 4px 8px black;
+      cursor: pointer;
+      transition: 0.12s linear;
+      box-shadow: 0 8px 0 #0a1c24;
+      border: 1px solid #57b5c180;
+    }
+    .cell:active {
+      transform: scale(0.96);
+      box-shadow: 0 2px 0 #0a1c24;
+    }
+    .cell.win-highlight {
+      background: radial-gradient(circle at 30% 30%, #f3b33d, #c97e2a);
+      color: #1d2c2f;
+      text-shadow: 0 1px 2px white;
+      box-shadow: 0 0 0 2px #ffdd99, 0 8px 0 #7a4c1a;
+    }
+    .disabled-cell, .cell.disabled {
+      cursor: default;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    /* info panel */
+    .info-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: #0d1921b3;
+      padding: 12px 18px;
+      border-radius: 60px;
+    }
+    .status-area {
+      background: #010d14;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #d9e6f2;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+    .turn-indicator {
+      background: #1f3e47;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: bold;
+      color: #ffdd99;
+    }
+    button {
+      background: #2c5c6e;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #f0f3f5;
+      cursor: pointer;
+      transition: 0.15s;
+      font-family: inherit;
+      box-shadow: 0 2px 5px black;
+    }
+    button:active {
+      transform: scale(0.96);
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .reset-scores {
+      background: #442e38;
+    }
+    .new-game {
+      background: #257560;
+    }
+    .watch-tut {
+      background: #2d4f66;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    footer {
+      font-size: 0.7rem;
+      text-align: center;
+      margin-top: 18px;
+      color: #658aa0;
+    }
+    @media (max-width: 480px) {
+      .game-container {
+        padding: 16px;
+      }
+      .cell {
+        font-size: 2.8rem;
+        border-radius: 20px;
+      }
+      .board {
+        gap: 10px;
+        padding: 12px;
+      }
+      .score {
+        font-size: 1.6rem;
+      }
+      .player-symbol {
+        width: 36px;
+        line-height: 36px;
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="game-header">
+    <h1>⚡ TIC–TAC–TOE ⚡</h1>
+    <div class="sub">GRID LOGIC • SMART TURNS</div>
+  </div>
+
+  <!-- Game Mode Selection -->
+  <div class="mode-switch">
+    <button class="mode-btn" data-mode="twoPlayer" id="twoPlayerModeBtn">👥 TWO PLAYER</button>
+    <button class="mode-btn" data-mode="vsAI" id="vsAIModeBtn">🤖 VS COMPUTER</button>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="scoreboard">
+    <div class="player-card">
+      <div class="player-symbol">X</div>
+      <div class="player-name">PLAYER 1</div>
+      <div class="score" id="scoreX">0</div>
+    </div>
+    <div class="player-card">
+      <div class="player-symbol">O</div>
+      <div class="player-name">PLAYER 2</div>
+      <div class="score" id="scoreO">0</div>
+    </div>
+  </div>
+
+  <!-- Game Board 3x3 -->
+  <div class="board" id="board">
+    <!-- 9 cells generated via JS -->
+  </div>
+
+  <!-- Game Status & Turn -->
+  <div class="info-panel">
+    <div class="status-area" id="gameStatusMsg">⚡ KEEP PLAYING!</div>
+    <div class="turn-indicator" id="turnIndicator">🎮 X TURN</div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="btn-group">
+    <button class="new-game" id="newGameBtn">🔄 NEW GAME</button>
+    <button class="reset-scores" id="resetScoresBtn">🗑️ RESET SCORES</button>
+    <a href="#" id="watchTutorialLink" class="watch-tut" style="text-decoration: none;">📺 WATCH TUTORIAL</a>
+  </div>
+  <footer>✨ get three in a row — horizontally, vertically, or diagonally</footer>
+</div>
+
+<script>
+  // ---------- GAME STATE ----------
+  let board = Array(9).fill(null);       // null or 'X' / 'O'
+  let currentPlayer = 'X';               // X always starts
+  let gameActive = true;
+  let scores = { X: 0, O: 0 };
+  let winningCombo = null;               // store winning indices for highlight
+  let gameMode = "twoPlayer";            // "twoPlayer" or "vsAI"
+  let aiThinking = false;                // prevent overlapping AI moves
+
+  // DOM elements
+  const boardContainer = document.getElementById('board');
+  const scoreXEl = document.getElementById('scoreX');
+  const scoreOEl = document.getElementById('scoreO');
+  const gameStatusMsg = document.getElementById('gameStatusMsg');
+  const turnIndicator = document.getElementById('turnIndicator');
+  const newGameBtn = document.getElementById('newGameBtn');
+  const resetScoresBtn = document.getElementById('resetScoresBtn');
+  const twoPlayerBtn = document.getElementById('twoPlayerModeBtn');
+  const vsAIBtn = document.getElementById('vsAIModeBtn');
+  const tutorialLink = document.getElementById('watchTutorialLink');
+
+  // Helper: win combinations (8 lines)
+  const winPatterns = [
+    [0,1,2], [3,4,5], [6,7,8],  // rows
+    [0,3,6], [1,4,7], [2,5,8],  // columns
+    [0,4,8], [2,4,6]            // diagonals
+  ];
+
+  // ---------- UTILITIES ----------
+  function updateScoresUI() {
+    scoreXEl.innerText = scores.X.toString().padStart(2, '0');
+    scoreOEl.innerText = scores.O.toString().padStart(2, '0');
+  }
+
+  // check winner on current board, returns { winner: 'X' or 'O' or null, winningLine: array or null }
+  function checkWinnerOnBoard(boardArr) {
+    for (let pattern of winPatterns) {
+      const [a,b,c] = pattern;
+      if (boardArr[a] && boardArr[a] === boardArr[b] && boardArr[a] === boardArr[c]) {
+        return { winner: boardArr[a], winningLine: pattern };
+      }
+    }
+    return { winner: null, winningLine: null };
+  }
+
+  // check if board is full (draw)
+  function isBoardFull(boardArr) {
+    return boardArr.every(cell => cell !== null);
+  }
+
+  // evaluate game state, update scores & active flag, returns winner/draw info
+  function evaluateAndUpdateGameState() {
+    const { winner, winningLine } = checkWinnerOnBoard(board);
+    if (winner) {
+      gameActive = false;
+      winningCombo = winningLine;
+      // increment score
+      scores[winner] += 1;
+      updateScoresUI();
+      updateStatusAndTurnUI(`🏆 PLAYER ${winner} WINS! 🏆`, winner);
+      renderBoardHighlight(); // highlight winning cells
+      return true; // game ended with win
+    } 
+    else if (isBoardFull(board)) {
+      gameActive = false;
+      winningCombo = null;
+      updateStatusAndTurnUI(`🤝 IT'S A DRAW! 🤝`, null);
+      renderBoardHighlight(); // remove any old highlight
+      return true; // game ended with draw
+    }
+    // game continues
+    winningCombo = null;
+    updateStatusAndTurnUI(null, null); // just refresh turn info
+    renderBoardHighlight(); // remove highlights
+    return false;
+  }
+
+  // update status message and turn based on gameActive & currentPlayer
+  function updateStatusAndTurnUI(customMessage, winnerSymbol) {
+    if (customMessage) {
+      gameStatusMsg.innerText = customMessage;
+      if (winnerSymbol) {
+        turnIndicator.innerText = winnerSymbol === 'X' ? '✨ X VICTORY ✨' : '✨ O VICTORY ✨';
+      } else if (!gameActive && isBoardFull(board)) {
+        turnIndicator.innerText = '📦 DRAW';
+      } else {
+        turnIndicator.innerText = gameActive ? `${currentPlayer}'s TURN` : 'GAME OVER';
+      }
+      return;
+    }
+    
+    // normal status update (game active)
+    if (gameActive) {
+      gameStatusMsg.innerText = '⚡ GAME IN PROGRESS ⚡';
+      if (gameMode === "vsAI" && currentPlayer === 'O' && gameActive && !aiThinking) {
+        turnIndicator.innerText = `🤖 COMPUTER (O) THINKS...`;
+      } else {
+        turnIndicator.innerText = `🎮 ${currentPlayer}'s TURN`;
+      }
+    } else {
+      // if game ended but no custom message (should not happen)
+      if (!gameActive) gameStatusMsg.innerText = '⏸️ GAME FINISHED';
+    }
+  }
+
+  // render board cells based on board array
+  function renderBoard() {
+    const cells = document.querySelectorAll('.cell');
+    for (let i = 0; i < cells.length; i++) {
+      cells[i].innerText = board[i] || '';
+      if (board[i] === 'X') cells[i].style.color = '#B9F3FF';
+      else if (board[i] === 'O') cells[i].style.color = '#FFCC88';
+      else cells[i].style.color = '#f0f0f0';
+    }
+  }
+
+  // highlight winning combination if exists
+  function renderBoardHighlight() {
+    const cells = document.querySelectorAll('.cell');
+    // remove existing highlight class
+    cells.forEach(cell => cell.classList.remove('win-highlight'));
+    if (winningCombo && gameActive === false) {
+      winningCombo.forEach(idx => {
+        if (cells[idx]) cells[idx].classList.add('win-highlight');
+      });
+    }
+  }
+
+  // reset board (keep scores, reset gameActive, currentPlayer to X, clear board)
+  function resetBoard(resetGameStateOnly = true) {
+    // cancel any pending AI call
+    aiThinking = false;
+    board.fill(null);
+    currentPlayer = 'X';
+    gameActive = true;
+    winningCombo = null;
+    renderBoard();
+    evaluateAndUpdateGameState(); // refresh status messages / clean highlights (no score increment)
+    // force re-evaluate because board is empty: gameActive true, no winner
+    // but we need to reset status manually to avoid stale messages
+    if (isBoardFull(board) === false && checkWinnerOnBoard(board).winner === null) {
+      gameActive = true;
+      winningCombo = null;
+      updateStatusAndTurnUI(null, null);
+      renderBoardHighlight();
+    }
+    // after reset, if vs AI and currentPlayer is 'O'? but always X, so fine
+    // Also ensure no leftover AI triggered
+  }
+
+  // full reset including scores
+  function fullResetWithScores() {
+    scores = { X: 0, O: 0 };
+    updateScoresUI();
+    resetBoard(true);
+  }
+
+  // make a move on board (cell index)
+  function makeMove(index, playerSymbol) {
+    if (!gameActive) return false;
+    if (board[index] !== null) return false;
+    if (playerSymbol !== currentPlayer) return false;
+    if (aiThinking) return false;
+
+    // commit move
+    board[index] = playerSymbol;
+    renderBoard();
+
+    // check win/draw after move
+    const gameEnded = evaluateAndUpdateGameState();
+    
+    if (!gameEnded && gameActive) {
+      // switch player
+      currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+      updateStatusAndTurnUI(null, null);
+      renderBoardHighlight();
+    } else {
+      // game finished: scores already updated, update UI
+      renderBoardHighlight();
+    }
+    return true;
+  }
+
+  // ---------- AI MINIMAX (UNBEATABLE) ----------
+  // AI plays as 'O', human as 'X'
+  function minimax(boardArr, depth, isMaximizing) {
+    const { winner } = checkWinnerOnBoard(boardArr);
+    if (winner === 'O') return 10 - depth;    // AI wins
+    if (winner === 'X') return -10 + depth;   // human wins
+    if (isBoardFull(boardArr)) return 0;
+    
+    if (isMaximizing) {
+      let best = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (boardArr[i] === null) {
+          boardArr[i] = 'O';
+          let score = minimax(boardArr, depth + 1, false);
+          boardArr[i] = null;
+          best = Math.max(score, best);
+        }
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (boardArr[i] === null) {
+          boardArr[i] = 'X';
+          let score = minimax(boardArr, depth + 1, true);
+          boardArr[i] = null;
+          best = Math.min(score, best);
+        }
+      }
+      return best;
+    }
+  }
+
+  function getBestAIMove() {
+    let bestScore = -Infinity;
+    let bestMove = -1;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === null) {
+        // simulate AI move
+        board[i] = 'O';
+        let moveScore = minimax(board, 0, false);
+        board[i] = null;
+        if (moveScore > bestScore) {
+          bestScore = moveScore;
+          bestMove = i;
+        }
+      }
+    }
+    return bestMove;
+  }
+
+  // AI makes a move (computer as O)
+  async function aiMove() {
+    if (!gameActive) return;
+    if (currentPlayer !== 'O') return;
+    if (gameMode !== "vsAI") return;
+    if (aiThinking) return;
+
+    aiThinking = true;
+    updateStatusAndTurnUI(null, null); // show thinking status
+
+    // tiny delay to smooth UI & prevent race
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    if (!gameActive || currentPlayer !== 'O' || gameMode !== "vsAI") {
+      aiThinking = false;
+      return;
+    }
+
+    const bestIndex = getBestAIMove();
+    if (bestIndex !== -1 && board[bestIndex] === null && gameActive) {
+      makeMove(bestIndex, 'O');
+    }
+    aiThinking = false;
+    // after move, if game still active & mode vsAI & currentPlayer X, wait for human.
+    if (gameActive && gameMode === "vsAI" && currentPlayer === 'X') {
+      // it's human turn again
+      updateStatusAndTurnUI(null, null);
+    } else if (!gameActive) {
+      renderBoardHighlight();
+    } else if (gameActive && currentPlayer === 'O' && gameMode === "vsAI") {
+      // edge case: double check (should not happen)
+      if (!aiThinking) aiMove();
+    }
+  }
+
+  // trigger AI after human move if conditions match
+  function maybeTriggerAI() {
+    if (gameMode === "vsAI" && gameActive && currentPlayer === 'O' && !aiThinking) {
+      aiMove();
+    }
+  }
+
+  // ---------- HANDLE HUMAN CLICK ----------
+  function onCellClick(index) {
+    if (!gameActive) return;
+    if (aiThinking) {
+      gameStatusMsg.innerText = '🤖 Computer is thinking... wait';
+      return;
+    }
+    // vs AI mode: human must be X (player 1)
+    if (gameMode === "vsAI" && currentPlayer !== 'X') {
+      // not human turn
+      gameStatusMsg.innerText = '🤖 Wait for computer...';
+      setTimeout(() => {
+        if (gameActive) updateStatusAndTurnUI(null, null);
+      }, 600);
+      return;
+    }
+    // two player mode: any active player
+    const success = makeMove(index, currentPlayer);
+    if (success) {
+      // after move, check if game finished or switch turn
+      if (gameActive && gameMode === "vsAI" && currentPlayer === 'O') {
+        // after human move, currentPlayer switched to O -> trigger AI
+        maybeTriggerAI();
+      } else {
+        // for two-player, just update UI (already done in makeMove)
+        if (gameActive) updateStatusAndTurnUI(null, null);
+      }
+    }
+  }
+
+  // ---------- BUILD BOARD UI ----------
+  function buildBoardUI() {
+    boardContainer.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
+      cell.setAttribute('data-index', i);
+      cell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(cell.getAttribute('data-index'));
+        onCellClick(idx);
+      });
+      boardContainer.appendChild(cell);
+    }
+    renderBoard();
+  }
+
+  // mode switching logic
+  function setGameMode(mode) {
+    gameMode = mode;
+    if (mode === "twoPlayer") {
+      twoPlayerBtn.classList.add('active');
+      vsAIBtn.classList.remove('active');
+    } else {
+      vsAIBtn.classList.add('active');
+      twoPlayerBtn.classList.remove('active');
+    }
+    // reset board fully but keep scores? keep scores for continuity, but board full reset to avoid state conflict
+    // cancel any ongoing AI
+    aiThinking = false;
+    resetBoard(true);
+    // additional safety: ensure currentPlayer X and game active
+    currentPlayer = 'X';
+    gameActive = true;
+    winningCombo = null;
+    renderBoard();
+    evaluateAndUpdateGameState();  // sync ui
+    // If AI mode and after reset computer turn? X starts, no AI auto move
+    updateStatusAndTurnUI(null, null);
+  }
+
+  // New game action (preserve scores, only reset board)
+  function newGameAction() {
+    aiThinking = false;
+    resetBoard(true);
+    currentPlayer = 'X';
+    gameActive = true;
+    winningCombo = null;
+    renderBoard();
+    evaluateAndUpdateGameState();
+    // if vs AI and currentPlayer weird? after reset always X turn
+    if (gameMode === "vsAI" && currentPlayer === 'X') {
+      // human turn, fine no AI
+    }
+    updateStatusAndTurnUI(null, null);
+  }
+
+  // Tutorial placeholder
+  tutorialLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    gameStatusMsg.innerText = '📘 Tutorial: Get 3 in a row! Click NEW GAME to restart.';
+    setTimeout(() => {
+      if (gameActive) gameStatusMsg.innerText = '⚡ GAME IN PROGRESS ⚡';
+      else if (!gameActive && checkWinnerOnBoard(board).winner) gameStatusMsg.innerText = '🏆 Game finished. Press NEW GAME.';
+    }, 2500);
+  });
+
+  // event listeners
+  newGameBtn.addEventListener('click', () => newGameAction());
+  resetScoresBtn.addEventListener('click', () => {
+    fullResetWithScores();
+    newGameAction(); // ensure board fresh after score reset
+  });
+  twoPlayerBtn.addEventListener('click', () => setGameMode("twoPlayer"));
+  vsAIBtn.addEventListener('click', () => setGameMode("vsAI"));
+
+  // initial setup
+  buildBoardUI();
+  setGameMode("twoPlayer");  // default two-player
+  updateScoresUI();
+  resetBoard(true);
+  
+  // extra: after mount double check active status
+  window.addEventListener('load', () => {
+    renderBoard();
+    updateStatusAndTurnUI(null, null);
+  });
+</script>
+</body>
+</html>
